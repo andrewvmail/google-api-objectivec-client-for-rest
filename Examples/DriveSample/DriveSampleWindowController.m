@@ -84,9 +84,17 @@ NSString *const kGTMAppAuthKeychainItemName = @"DriveSample: Google Drive. GTMAp
 }
 
 - (void)awakeFromNib {
+     NSLog(@"-----AWAKE FROM NIB -----------");
   // Attempts to deserialize authorization from keychain in GTMAppAuth format.
   id<GTMFetcherAuthorizationProtocol> authorization =
       [GTMAppAuthFetcherAuthorization authorizationFromKeychainForName:kGTMAppAuthKeychainItemName];
+    
+    
+     NSLog(@"-----MOMO-----------%@", authorization);
+    
+    
+    
+    
   self.driveService.authorizer = authorization;
 
   // Set the result text fields to have a distinctive color and mono-spaced font.
@@ -505,8 +513,9 @@ NSString *const kGTMAppAuthKeychainItemName = @"DriveSample: Google Drive. GTMAp
   // The Drive API uses the "fields" property differently by not sending most of the requested
   // resource's fields unless they are explicitly specified.
   query.fields = @"kind,nextPageToken,files(mimeType,id,kind,name,webViewLink,thumbnailLink,trashed)";
-
-  _fileListTicket = [service executeQuery:query
+  query.spaces = @"appDataFolder";
+    
+    _fileListTicket = [service executeQuery:query
                         completionHandler:^(GTLRServiceTicket *callbackTicket,
                                             GTLRDrive_FileList *fileList,
                                             NSError *callbackError) {
@@ -764,10 +773,12 @@ NSString *const kGTMAppAuthKeychainItemName = @"DriveSample: Google Drive. GTMAp
                                                MIMEType:mimeType];
   GTLRDrive_File *newFile = [GTLRDrive_File object];
   newFile.name = filename;
+  newFile.parents = @[@"appDataFolder"];
 
   GTLRDriveQuery_FilesCreate *query = [GTLRDriveQuery_FilesCreate queryWithObject:newFile
                                                                  uploadParameters:uploadParameters];
 
+    
   NSProgressIndicator *uploadProgressIndicator = _uploadProgressIndicator;
   query.executionParameters.uploadProgressBlock = ^(GTLRServiceTicket *callbackTicket,
                                                     unsigned long long numberOfBytesRead,
@@ -818,6 +829,8 @@ NSString *const kGTMAppAuthKeychainItemName = @"DriveSample: Google Drive. GTMAp
 #pragma mark Sign In
 
 - (void)runSigninThenHandler:(void (^)(void))handler {
+    
+  NSLog(@"-----runSigninThenHandler-----------");
     // Applications should have client ID hardcoded into the source
     // but the sample application asks the developer for the strings.
     // Client secret is now left blank.
@@ -849,7 +862,8 @@ NSString *const kGTMAppAuthKeychainItemName = @"DriveSample: Google Drive. GTMAp
       [GTMAppAuthFetcherAuthorization configurationForGoogle];
   // Applications that only need to access files created by this app should
   // use the kGTLRAuthScopeDriveFile scope.
-  NSArray<NSString *> *scopes = @[ kGTLRAuthScopeDrive, OIDScopeEmail ];
+    NSArray<NSString *> *scopes = @[ kGTLRAuthScopeDriveFile, OIDScopeEmail,
+                                     kGTLRAuthScopeDriveAppdata ];
   OIDAuthorizationRequest *request =
       [[OIDAuthorizationRequest alloc] initWithConfiguration:configuration
                                                     clientId:clientID
